@@ -281,17 +281,17 @@ if __name__ == '__main__':
 		segments.append((ob[-1], ob[0], i))
 		control_points.append((ob[-1][0], ob[-1][1], i, i))
 
-	# [pt1, pt2, obstacle_id1, obstacle_id2]
+	# [pt1, pt2, obstacle_id1, obstacle_id2, segment_id1, segment_id2]
 	intersections = []
 	for i in range(len(segments)):
 		for j in range(i+1, len(segments)):
 			if segments[i][2] == segments[j][2]:
-				# sage obstacle
+				# same obstacle
 				continue;
 			p = mp.line_intersections(segments[i][0], segments[i][1], \
 				segments[j][0], segments[j][1])
 			if p != None:
-				intersections.append((p[0], p[1], segments[i][2], segments[j][2]))
+				intersections.append((p[0], p[1], segments[i][2], segments[j][2], i, j))
 
 	m_intersections = []
 	for p in intersections:
@@ -322,7 +322,7 @@ if __name__ == '__main__':
 	x,y,id1,id2 = zip(*m_control_points)
 	ax.scatter(x,y, s = 50, c = 'g')
 
-	x,y,id1,id2 = zip(*m_intersections)
+	x,y,id1,id2,sid1,sid2 = zip(*m_intersections)
 	ax.scatter(x,y, s = 20, c = 'r')
 
 	# generate graph edge candidates
@@ -331,11 +331,25 @@ if __name__ == '__main__':
 		p1 = m_intersections[i]
 		for j in range(i+1, len(m_intersections)):
 			p2 = m_intersections[j]
+
+			# same obstacle, different segments
+			if p1[2] == p2[2]:
+				# same obstacle
+				if (p1[3] == p2[3] and p1[4] == p2[4]) or \
+					(p1[4] == p2[3] and p1[3] == p1[4]):
+					# same segment
+					pass
+				else:
+					continue
+
+			"""
 			if (p1[2] == p2[2] and p1[3] == p2[3]) or \
 				(p1[2] == p2[3] and p1[3] == p2[2]):
 				# intersections are from two obstacles only
 				continue
+			"""
 
+			"""
 			crossed = False
 			for o in range(len(obstacles)):
 				ob = obstacles[o]
@@ -346,6 +360,7 @@ if __name__ == '__main__':
 					break
 			if crossed:
 				continue
+			"""
 
 			edges.append((p1[0:2], p2[0:2]))		
 
