@@ -10,6 +10,7 @@
 import random
 import functools
 import copy
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
@@ -162,6 +163,56 @@ class MotionPlanning:
 			else:
 				return None
 
+	def line_intersections2(self, pt1, pt2, pt3, pt4):
+		"""
+			Calculate intersections of two line segments
+			http://www-cs.ccny.cuny.edu/~wolberg/capstone/intersection/Intersection%20point%20of%20two%20lines.html
+		"""
+		x1 = float(pt1[0]); y1 = float(pt1[1]);
+		x2 = float(pt2[0]); y2 = float(pt2[1]);
+		x3 = float(pt3[0]); y3 = float(pt3[1]);
+		x4 = float(pt4[0]); y4 = float(pt4[1]);
+
+		d = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1)
+		na = (x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3)
+		nb = (x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3)
+
+		if d == 0:
+			# parallel
+			if (na == 0) and (nb == 0):
+				# TODO: coincident
+				return None
+		else:
+			ua = na/d
+			ub = nb/d
+			eps = sys.float_info.epsilon
+			if ua >= eps and ua <= 1.0 - eps and ub >= eps and ub <= 1.0 - eps:
+				x = x1 + ua*(x2 - x1)
+				y = y1 + ua*(y2 - y1)
+				return (x, y)
+			else:
+				return None
+
+	def is_crossed(self, pt1, pt2, obstacle):
+		if self.is_point_in_cpolygon(pt1, obstacle):
+			return True
+		if self.is_point_in_cpolygon(pt2, obstacle):
+			return True
+
+		intersections = 0
+		for i in range(len(obstacle) - 1):
+			if self.line_intersections2(pt1, pt2, obstacle[i], obstacle[i+1]) != None:
+				intersections += 1
+				if intersections > 1:
+					return True
+
+		if self.line_intersections2(pt1, pt2, obstacle[-1], obstacle[0]) != None:
+			intersections += 1
+			if intersections > 1:
+				return True	
+
+		return False
+
 	def is_point_in_cpolygon(self, pt, points):
 		"""
 			Check if point is in convex polygon
@@ -284,7 +335,19 @@ if __name__ == '__main__':
 				(p1[2] == p2[3] and p1[3] == p2[2]):
 				# intersections are from two obstacles only
 				continue
-			edges.append((p1[0:2], p2[0:2]))
+
+			crossed = False
+			for o in range(len(obstacles)):
+				ob = obstacles[o]
+				#if (p1[2] == o or p1[3] == o) and (p2[2] == o or p2[3] == o):
+				#	continue 
+				if mp.is_crossed(p1, p2, ob):
+					crossed = True
+					break
+			if crossed:
+				continue
+
+			edges.append((p1[0:2], p2[0:2]))		
 
 	for edge in edges:
 		x,y = zip(*edge)
