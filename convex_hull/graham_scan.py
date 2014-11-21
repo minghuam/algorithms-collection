@@ -98,7 +98,6 @@ class GrahamScan:
 		self.swap(points, 0, anchor_i)
 		
 		# step two: sort
-		# TODO: no globals
 		self.anchor = points[0]
 		points[1:] = sorted(points[1:], key = functools.cmp_to_key(self.compare_angle))
 
