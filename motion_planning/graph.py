@@ -2,6 +2,7 @@ class Graph:
 	def __init__(self):
 		# key: vertex, value: neighbors
 		self.vertices = dict()
+		self.edges = dict()
 
 	def insert(self, v1, v2, distance):
 		""" Insert an edge to graph
@@ -18,30 +19,36 @@ class Graph:
 		for v in self.vertices:
 			print v, len(self.vertices[v]), self.vertices[v]
 
-	def dijkstra(self, source, dest):
+	def dijkstra(self, source):
 		dist = dict()
-
+		previous = dict()
+		unvisited = set()
+		
 		for v in self.vertices:
 			dist[v] = float('Inf')
-			unvisited.append(v)
+			previous[v] = None
+			unvisited.add(v)
 
-		dist[source] = 0.0
+		dist[source] = 0
 
-		for i in range(len(self.vertices)):
-			# find the closest & unvisited vertex
+		while len(unvisited) > 0:
+			# find u with minimum dist
 			min_dist = float('Inf')
-			for v in self.vertices:
-				if visited[v] == False and dist[v] <= min_dist:
+			for v in unvisited:
+				if dist[v] <= min_dist:
 					min_dist = dist[v]
 					u = v
-			# mark visited
-			visited[u] = True
+			# remove u
+			unvisited.remove(u)
 
-			# update distance of neighbors
 			neighbors = self.vertices[u]
-			for vd in neighbors:
-				v = vd[0]; w = vd[1];
-				d = dist[u] + w;
-				if visited[v] == False and d < dist[v]:
+			for vw in neighbors:
+				v = vw[0]; w = vw[1];
+				d = dist[u] + w
+				if d < dist[v]:
 					dist[v] = d
+					previous[v] = u
+
+		return dist, previous
+
 		

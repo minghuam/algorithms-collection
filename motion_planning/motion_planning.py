@@ -394,13 +394,15 @@ if __name__ == '__main__':
 
 	edges_d = []
 	# generate graph edge candidates between desination and any other point
-	p1 = [1.4, 1.4, point_id]
-	point_id += 1
+	destination = [1.4, 1.4, point_id]
 	valid_destination = True
 	for ob in obstacles:
-		if mp.is_point_in_cpolygon(p1, ob):
+		if mp.is_point_in_cpolygon(destination, ob):
 			valid_destination = False
 			break
+
+	# TODO: handle invalid destination
+	p1 = destination
 	for i in range(len(m_control_points)):
 		p2 = m_control_points[i]
 		crossed = False
@@ -414,6 +416,28 @@ if __name__ == '__main__':
 		if not crossed:
 			edges_d.append(((p1[-1],p1[0],p1[1]), (p2[-1],p2[0],p2[1])))
 
+
+	all_edges = edges_i + edges_c + edges_ic + edges_r + edges_d
+	
+	import graph
+	g = graph.Graph()
+	for edge in all_edges:
+		v1 = edge[0]
+		v2 = edge[1]
+		dist = math.sqrt((edge[0][1] - edge[1][1])**2 + (edge[0][2] - edge[1][2])**2)
+		g.insert(v1, v2, dist)
+
+	dist, previous = g.dijkstra((0, robot[0][0], robot[0][1]))
+	print dist
+	shortest_path = []
+	v = (destination[-1], destination[0], destination[1])
+	shortest_path.append(v)
+	while previous[v] != None:
+		shortest_path.append(previous[v])
+		v = previous[v]
+
+	print shortest_path
+
 	fig = plt.figure()
 	ax = fig.add_subplot(111, axisbg = 'black')
 	plt.xlim((-0.2, 1.5))
@@ -423,7 +447,7 @@ if __name__ == '__main__':
 		mp.draw_polygon(ax, obstacle, 'r')
 
 	for obstacle in obstacles:
-		mp.draw_polygon(ax, obstacle, 'y')
+		mp.draw_polygon(ax, obstacle, 'y', alpha = 0.45)
 
 	mp.draw_polygon(ax, robot, 'w', alpha = 0.5)
 	ax.scatter(robot[0][0],robot[0][1], s = 20, c = 'r')
@@ -455,17 +479,9 @@ if __name__ == '__main__':
 		pid,x,y = zip(*edge)
 		ax.plot(x, y, 'w--', alpha = 0.5)
 
-	all_edges = edges_i + edges_c + edges_ic + edges_r + edges_d
-	
-	import graph
-	g = graph.Graph()
-	for edge in all_edges:
-		v1 = edge[0][0]
-		v2 = edge[1][0]
-		dist = math.sqrt((edge[0][1] - edge[1][1])**2 + (edge[0][2] - edge[1][2])**2)
-		g.insert(v1, v2, dist)
-
-	#g.dijkstra(0)
+	pid,x,y = zip(*shortest_path)
+	ax.scatter(x[0], y[0], s = 50, c = 'w')
+	ax.plot(x, y, 'g-', alpha = 0.8, linewidth = 3)
 
 	plt.show()
 
